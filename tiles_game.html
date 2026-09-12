@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Block Breaker Game</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -44,21 +44,21 @@
 
         // Paddle setup
         const paddleHeight = 15;
-        const paddleWidth = 120;
+        let paddleWidth = 120;
         let paddleX = 0;
 
         // Controls
         let rightPressed = false;
         let leftPressed = false;
 
-        // Blocks setup
+        // Blocks setup - will be calculated dynamically
         const brickRowCount = 4;
         const brickColumnCount = 7;
-        const brickWidth = 95;
-        const brickHeight = 25;
-        const brickPadding = 12;
-        const brickOffsetTop = 40;
-        const brickOffsetLeft = 32;
+        let brickWidth = 95;
+        let brickHeight = 25;
+        let brickPadding = 12;
+        let brickOffsetTop = 40;
+        let brickOffsetLeft = 32;
 
         let score = 0;
 
@@ -71,11 +71,46 @@
             }
         }
         
+        // Calculate responsive brick dimensions
+        function calculateBrickDimensions(canvasWidth, canvasHeight) {
+            if (isMobile) {
+                // For portrait mobile, scale down bricks
+                brickPadding = 6;
+                brickWidth = (canvasWidth - 60) / brickColumnCount - brickPadding;
+                brickHeight = 18;
+                brickOffsetTop = 20;
+                brickOffsetLeft = 8;
+                paddleWidth = canvasWidth * 0.5; // Paddle is 50% of canvas width
+            } else {
+                // Default desktop sizing
+                brickWidth = 95;
+                brickHeight = 25;
+                brickPadding = 12;
+                brickOffsetTop = 40;
+                brickOffsetLeft = 32;
+                paddleWidth = 120;
+            }
+        }
+        
         // Set canvas size based on device
         function setCanvasSize() {
-            const availableWidth = Math.min(window.innerWidth - 40, 800);
-            canvas.width = availableWidth;
-            canvas.height = (availableWidth / 800) * 500;
+            let width, height;
+            
+            if (isMobile) {
+                // Portrait mode for mobile
+                width = Math.min(window.innerWidth - 40, 500);
+                height = (width / 500) * 800; // Portrait ratio (5:8)
+            } else {
+                // Landscape for desktop
+                width = 800;
+                height = 500;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Calculate responsive brick dimensions based on canvas size
+            calculateBrickDimensions(width, height);
             
             // Reinitialize game state variables after resize
             if (isGameStarted === false) {
@@ -87,7 +122,29 @@
         
         // Initialize canvas size after getting elements
         setCanvasSize();
-        window.addEventListener("resize", setCanvasSize);
+        
+        // Call initial render after canvas setup
+        setTimeout(() => {
+            if (typeof renderInitialState !== 'undefined' && !isGameStarted) {
+                renderInitialState();
+            }
+        }, 50);
+        
+        window.addEventListener("resize", function() {
+            setCanvasSize();
+            if (!isGameStarted) {
+                setTimeout(renderInitialState, 50);
+            }
+        });
+        
+        window.addEventListener("orientationchange", function() {
+            setTimeout(() => {
+                setCanvasSize();
+                if (!isGameStarted) {
+                    renderInitialState();
+                }
+            }, 100);
+        });
 
         
         // Show appropriate instructions
