@@ -79,8 +79,11 @@
                 brickWidth = (canvasWidth - 60) / brickColumnCount - brickPadding;
                 brickHeight = 18;
                 brickOffsetTop = 20;
-                brickOffsetLeft = 8;
                 paddleWidth = canvasWidth * 0.5; // Paddle is 50% of canvas width
+                
+                // Center the bricks horizontally
+                const totalBricksWidth = (brickColumnCount * brickWidth) + ((brickColumnCount - 1) * brickPadding);
+                brickOffsetLeft = (canvasWidth - totalBricksWidth) / 2;
             } else {
                 // Default desktop sizing
                 brickWidth = 95;
