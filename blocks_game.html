@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Puzzle Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e2f;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            margin: 10px 0;
+        }
+        .score-board {
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        #game-board {
+            border: 4px solid #3a3a5a;
+            border-radius: 8px;
+            background-color: #12121c;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+        }
+        #tray {
+            display: flex;
+            gap: 20px;
+            margin-top: 25px;
+            height: 120px;
+            align-items: center;
+            justify-content: center;
+        }
+        .shape-preview {
+            cursor: grab;
+        }
+        .shape-preview:active {
+            cursor: grabbing;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Block Puzzle</h1>
+    <div class="score-board">Score: <span id="score">0</span></div>
+    
+    <!-- Main 8x8 Grid Canvas -->
+    <canvas id="game-board" width="320" height="320"></canvas>
+    
+    <!-- Tray holding the 3 available shapes -->
+    <div id="tray">
+        <canvas id="shape0" class="shape-preview" width="100" height="100"></canvas>
+        <canvas id="shape1" class="shape-preview" width="100" height="100"></canvas>
+        <canvas id="shape2" class="shape-preview" width="100" height="100"></canvas>
+    </div>
+
+    <script>
+        const GRID_SIZE = 8;
+        const CELL_SIZE = 40; // 8 * 40 = 320px width/height
+        const canvas = document.getElementById('game-board');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+
+        let score = 0;
+        // 8x8 grid represented by 2D array (0 = empty, string = color)
+        let grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(0));
+
+        // Define Tetris/Block shapes and their colors
+        const SHAPES = [
+            { color: '#FF5733', matrix: [[1]] },                             // 1x1 Single
+            { color: '#33FF57', matrix: [[1, 1]] },                          // 1x2 Horizontal
+            { color: '#3357FF', matrix: [[1], [1]] },                        // 2x1 Vertical
+            { color: '#F3FF33', matrix: [[1, 1], [1, 1]] },                  // 2x2 Square
+            { color: '#FF33F3', matrix: [[1, 1, 1]] },                       // 1x3 Horizontal
+            { color: '#33FFF3', matrix: [[1], [1], [1]] },                   // 3x1 Vertical
+            { color: '#FFA500', matrix: [[1, 1, 1], [0, 1, 0]] },            // T-shape
+            { color: '#9933FF', matrix: [[1, 0], [1, 0], [1, 1]] },          // L-shape
+            { color: '#FF3380', matrix: [[1, 1, 1], [1, 1, 1], [1, 1, 1]] }   // 3x3 Block
+        ];
+
+        let currentShapes = [null, null, null];
+        let draggingIndex = null;
+        let dragOffset = { x: 0, y: 0 };
+        let mousePos = { x: 0, y: 0 };
+
+        // --- Core Game Functions ---
+
+        function initGame() {
+            grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(0));
+            score = 0;
+            scoreElement.innerText = score;
+            spawnShapes();
+            drawGrid();
+        }
+
+        function drawGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    ctx.strokeStyle = '#2a2a40';
+                    ctx.strokeRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    
+                    if (grid[r][c]) {
+                        drawCell(ctx, c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, grid[r][c]);
+                    }
+                }
+            }
+        }
+
+        function drawCell(context, x, y, size, color) {
+            context.fillStyle = color;
+            context.fillRect(x + 1, y + 1, size - 2, size - 2);
+            context.strokeStyle = 'rgba(255,255,255,0.3)';
+            context.strokeRect(x + 2, y + 2, size - 4, size - 4);
+        }
+
+        function spawnShapes() {
+            for (let i = 0; i < 3; i++) {
+                const randomShape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+                currentShapes[i] = JSON.parse(JSON.stringify(randomShape));
+                drawTrayShape(i);
+            }
+        }
+
+        function drawTrayShape(index) {
+            const trayCanvas = document.getElementById(`shape${index}`);
+            const tCtx = trayCanvas.getContext('2d');
+            tCtx.clearRect(0, 0, trayCanvas.width, trayCanvas.height);
+
+            const shape = currentShapes[index];
+            if (!shape) return;
+
+            const scale = 20; // smaller preview size
+            const rows = shape.matrix.length;
+            const cols = shape.matrix[0].length;
+            
+            // Center in tray canvas
+            const offsetX = (trayCanvas.width - cols * scale) / 2;
+            const offsetY = (trayCanvas.height - rows * scale) / 2;
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (shape.matrix[r][c]) {
+                        drawCell(tCtx, offsetX + c * scale, offsetY + r * scale, scale, shape.color);
+                    }
+                }
+            }
+        }
+
+        function canPlaceShape(shape, startRow, startCol) {
+            const rows = shape.matrix.length;
+            const cols = shape.matrix[0].length;
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (shape.matrix[r][c]) {
+                        const gridR = startRow + r;
+                        const gridC = startCol + c;
+
+                        if (gridR < 0 || gridR >= GRID_SIZE || gridC < 0 || gridC >= GRID_SIZE) {
+                            return false; // Out of bounds
+                        }
+                        if (grid[gridR][gridC] !== 0) {
+                            return false; // Cell already occupied
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        function placeShape(shape, startRow, startCol) {
+            const rows = shape.matrix.length;
+            const cols = shape.matrix[0].length;
+            let placedCells = 0;
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (shape.matrix[r][c]) {
+                        grid[startRow + r][startCol + c] = shape.color;
+                        placedCells++;
+                    }
+                }
+            }
+
+            score += placedCells * 10;
+            checkLines();
+            scoreElement.innerText = score;
+        }
+
+        function checkLines() {
+            let rowsToClear = [];
+            let colsToClear = [];
+
+            // Check Rows
+            for (let r = 0; r < GRID_SIZE; r++) {
+                if (grid[r].every(cell => cell !== 0)) {
+                    rowsToClear.push(r);
+                }
+            }
+
+            // Check Columns
+            for (let c = 0; c < GRID_SIZE; c++) {
+                let full = true;
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    if (grid[r][c] === 0) {
+                        full = false;
+                        break;
+                    }
+                }
+                if (full) colsToClear.push(c);
+            }
+
+            // Clear Rows
+            rowsToClear.forEach(r => {
+                for (let c = 0; c < GRID_SIZE; c++) grid[r][c] = 0;
+            });
+
+            // Clear Columns
+            colsToClear.forEach(c => {
+                for (let r = 0; r < GRID_SIZE; r++) grid[r][c] = 0;
+            });
+
+            // Bonus points for cleared lines
+            const totalCleared = rowsToClear.length + colsToClear.length;
+            if (totalCleared > 0) {
+                score += totalCleared * 100;
+            }
+        }
+
+        // --- Mouse Drag and Drop Handlers ---
+
+        for (let i = 0; i < 3; i++) {
+            const trayCanvas = document.getElementById(`shape${i}`);
+            
+            trayCanvas.addEventListener('mousedown', (e) => {
+                if (!currentShapes[i]) return;
+                draggingIndex = i;
+                const rect = trayCanvas.getBoundingClientRect();
+                dragOffset.x = e.clientX - rect.left;
+                dragOffset.y = e.clientY - rect.top;
+            });
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            if (draggingIndex === null) return;
+
+            mousePos.x = e.clientX;
+            mousePos.y = e.clientY;
+
+            drawGrid();
+
+            // Render shape attached to cursor over main canvas
+            const rect = canvas.getBoundingClientRect();
+            const shape = currentShapes[draggingIndex];
+            
+            const canvasMouseX = mousePos.x - rect.left - dragOffset.x;
+            const canvasMouseY = mousePos.y - rect.top - dragOffset.y;
+
+            // Draw ghost/moving shape
+            for (let r = 0; r < shape.matrix.length; r++) {
+                for (let c = 0; c < shape.matrix[0].length; c++) {
+                    if (shape.matrix[r][c]) {
+                        drawCell(
+                            ctx, 
+                            canvasMouseX + c * CELL_SIZE, 
+                            canvasMouseY + r * CELL_SIZE, 
+                            CELL_SIZE, 
+                            shape.color
+                        );
+                    }
+                }
+            }
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (draggingIndex === null) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const dropX = e.clientX - rect.left - dragOffset.x + (CELL_SIZE / 2);
+            const dropY = e.clientY - rect.top - dragOffset.y + (CELL_SIZE / 2);
+
+            const gridCol = Math.floor(dropX / CELL_SIZE);
+            const gridRow = Math.floor(dropY / CELL_SIZE);
+
+            const shape = currentShapes[draggingIndex];
+
+            if (canPlaceShape(shape, gridRow, gridCol)) {
+                placeShape(shape, gridRow, gridCol);
+                currentShapes[draggingIndex] = null;
+
+                // Clear tray preview
+                const trayCanvas = document.getElementById(`shape${draggingIndex}`);
+                const tCtx = trayCanvas.getContext('2d');
+                tCtx.clearRect(0, 0, trayCanvas.width, trayCanvas.height);
+
+                // If all 3 shapes used, spawn 3 new ones
+                if (currentShapes.every(s => s === null)) {
+                    spawnShapes();
+                }
+            }
+
+            draggingIndex = null;
+            drawGrid();
+        });
+
+        // Start the game
+        initGame();
+    </script>
+</body>
+</html>
