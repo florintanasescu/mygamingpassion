@@ -9,8 +9,9 @@ html {
     overflow-y: auto;
 }
 
+/* Base Body Styles */
 body {
-    background: #111;
+    background-color: #111;
     color: #fff;
     font-family: Arial, sans-serif;
     display: flex;
@@ -23,11 +24,26 @@ body {
     padding: 8px;
     overflow-x: hidden;
     overflow-y: auto;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Default / Desktop Background */
+.bg-container {
+    background-image: url("img/bg_desktop.jpg");
+}
+
+/* Mobile Background Override */
+@media (max-width: 768px) {
+    .bg-container {
+        background-image: url("img/bg_mobile.jpg");
+    }
 }
 
 canvas {
     background: #222;
-    border: 3px solid #fff;
+    border: 3px solid #0095DD;
     box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
     display: block;
     margin: 0 auto;
