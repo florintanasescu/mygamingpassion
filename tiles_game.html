@@ -29,33 +29,15 @@
         const ctx = canvas.getContext("2d");
         const startBtn = document.getElementById("startBtn");
         const pauseBtn = document.getElementById("pauseBtn");
-        
-        // Set canvas size based on device
-        function setCanvasSize() {
-            const availableWidth = Math.min(window.innerWidth - 40, 800);
-            canvas.width = availableWidth;
-            canvas.height = (availableWidth / 800) * 500;
-            
-            // Reinitialize game state variables after resize
-            if (isGameStarted === false) {
-                x = canvas.width / 2;
-                y = canvas.height - 30;
-                paddleX = (canvas.width - paddleWidth) / 2;
-            }
-        }
-        
-        // Initialize canvas size after getting elements
-        setCanvasSize();
-        window.addEventListener("resize", setCanvasSize);
 
-        // Game states
+        // Game states - DECLARE FIRST
         let isGameStarted = false;
         let isPaused = false;
         let animationFrameId;
 
         // Ball setup
-        let x = canvas.width / 2;
-        let y = canvas.height - 30;
+        let x = 0;
+        let y = 0;
         let dx = 1;
         let dy = -1;
         const ballRadius = 10;
@@ -63,7 +45,7 @@
         // Paddle setup
         const paddleHeight = 15;
         const paddleWidth = 120;
-        let paddleX = (canvas.width - paddleWidth) / 2;
+        let paddleX = 0;
 
         // Controls
         let rightPressed = false;
@@ -88,6 +70,25 @@
                 bricks[c][r] = { x: 0, y: 0, status: 1 };
             }
         }
+        
+        // Set canvas size based on device
+        function setCanvasSize() {
+            const availableWidth = Math.min(window.innerWidth - 40, 800);
+            canvas.width = availableWidth;
+            canvas.height = (availableWidth / 800) * 500;
+            
+            // Reinitialize game state variables after resize
+            if (isGameStarted === false) {
+                x = canvas.width / 2;
+                y = canvas.height - 30;
+                paddleX = (canvas.width - paddleWidth) / 2;
+            }
+        }
+        
+        // Initialize canvas size after getting elements
+        setCanvasSize();
+        window.addEventListener("resize", setCanvasSize);
+
         
         // Show appropriate instructions
         if (isMobile) {
@@ -293,10 +294,15 @@
         }
 
         // Initial draw of static elements before game starts
-        drawBricks();
-        drawBall();
-        drawPaddle();
-        drawScore();
+        function renderInitialState() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBricks();
+            drawBall();
+            drawPaddle();
+            drawScore();
+        }
+        
+        renderInitialState();
     </script>
 </body>
 </html>
