@@ -75,11 +75,15 @@
         function calculateBrickDimensions(canvasWidth, canvasHeight) {
             if (isMobile) {
                 // For portrait mobile, scale down bricks
-                brickPadding = 6;
-                brickWidth = (canvasWidth - 60) / brickColumnCount - brickPadding;
-                brickHeight = 18;
-                brickOffsetTop = 20;
+                brickPadding = 8;
+                brickHeight = 20;
+                brickOffsetTop = 30;
                 paddleWidth = canvasWidth * 0.5; // Paddle is 50% of canvas width
+                
+                // Calculate brickWidth to fit in available space
+                const sideMargin = 15;
+                const availableWidth = canvasWidth - (2 * sideMargin);
+                brickWidth = (availableWidth - (brickColumnCount - 1) * brickPadding) / brickColumnCount;
                 
                 // Center the bricks horizontally
                 const totalBricksWidth = (brickColumnCount * brickWidth) + ((brickColumnCount - 1) * brickPadding);
