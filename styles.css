@@ -1,5 +1,8 @@
 * {
     box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none; /* Prevents screen scrolling during piece dragging */
 }
 
 html {
@@ -34,13 +37,18 @@ body {
     background-image: url("img/bg_desktop.jpg");
 }
 
-/* Mobile Background Override */
-@media (max-width: 768px) {
-    .bg-container {
-        background-image: url("img/bg_mobile.jpg");
-    }
+/* Headers & Score */
+h1 {
+    margin: 5px 0;
+    font-size: 28px;
 }
 
+.score-board {
+    font-size: 22px;
+    margin-bottom: 10px;
+}
+
+/* General Canvas Styles */
 canvas {
     background: #222;
     border: 3px solid #0095DD;
@@ -49,6 +57,37 @@ canvas {
     margin: 0 auto;
 }
 
+/* Block Puzzle Main Board Override */
+#game-board {
+    border: 4px solid #3a3a5a;
+    border-radius: 8px;
+    background-color: #12121c;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+    max-width: 90vw;
+    max-height: 90vw;
+}
+
+/* Block Puzzle Tray & Shapes */
+#tray {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    height: 100px;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.shape-preview {
+    cursor: grab;
+    touch-action: none;
+    background-color: #12121c;
+    border-radius: 6px;
+    border: 1px solid #3a3a5a;
+    box-shadow: none; /* Clears general canvas shadow for tray previews */
+}
+
+/* Controls & Buttons */
 .controls {
     margin-top: 15px;
     display: flex;
@@ -94,13 +133,14 @@ button:disabled {
 
 .instructions {
     margin-top: 15px;
-    color: #141414;
+    color: #ffffff;
     font-size: 14px;
     text-align: center;
     max-width: 90%;
     line-height: 1.4;
 }
 
+/* Mobile Responsive Adjustments */
 @media (max-width: 768px) {
     html {
         width: 100vw;
@@ -117,6 +157,10 @@ button:disabled {
         width: 100vw;
         height: 100vh;
         overflow: hidden;
+    }
+
+    .bg-container {
+        background-image: url("img/bg_mobile.jpg");
     }
     
     canvas {

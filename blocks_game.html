@@ -2,12 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Block Puzzle Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mobile Block Puzzle Game</title>
     <style>
         * {
             box-sizing: border-box;
             user-select: none;
+            -webkit-user-select: none;
+            touch-action: none; /* Prevents screen scrolling while dragging */
         }
         body {
             font-family: Arial, sans-serif;
@@ -19,33 +21,40 @@
             justify-content: center;
             min-height: 100vh;
             margin: 0;
+            padding: 10px;
+            overflow: hidden; /* Prevent bouncing on iOS/Android */
         }
         h1 {
-            margin: 10px 0;
+            margin: 5px 0;
+            font-size: 28px;
         }
         .score-board {
-            font-size: 24px;
-            margin-bottom: 15px;
+            font-size: 22px;
+            margin-bottom: 10px;
         }
         #game-board {
             border: 4px solid #3a3a5a;
             border-radius: 8px;
             background-color: #12121c;
             box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+            max-width: 90vw;
+            max-height: 90vw;
         }
         #tray {
             display: flex;
-            gap: 20px;
-            margin-top: 25px;
-            height: 120px;
+            gap: 10px;
+            margin-top: 15px;
+            height: 100px;
             align-items: center;
             justify-content: center;
+            width: 100%;
         }
         .shape-preview {
             cursor: grab;
-        }
-        .shape-preview:active {
-            cursor: grabbing;
+            touch-action: none;
+            background-color: #12121c;
+            border-radius: 6px;
+            border: 1px solid #3a3a5a;
         }
     </style>
 </head>
@@ -59,23 +68,21 @@
     
     <!-- Tray holding the 3 available shapes -->
     <div id="tray">
-        <canvas id="shape0" class="shape-preview" width="100" height="100"></canvas>
-        <canvas id="shape1" class="shape-preview" width="100" height="100"></canvas>
-        <canvas id="shape2" class="shape-preview" width="100" height="100"></canvas>
+        <canvas id="shape0" class="shape-preview" width="90" height="90"></canvas>
+        <canvas id="shape1" class="shape-preview" width="90" height="90"></canvas>
+        <canvas id="shape2" class="shape-preview" width="90" height="90"></canvas>
     </div>
 
     <script>
         const GRID_SIZE = 8;
-        const CELL_SIZE = 40; // 8 * 40 = 320px width/height
+        const CELL_SIZE = 40; // 8 * 40 = 320px
         const canvas = document.getElementById('game-board');
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
 
         let score = 0;
-        // 8x8 grid represented by 2D array (0 = empty, string = color)
         let grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(0));
 
-        // Define Tetris/Block shapes and their colors
         const SHAPES = [
             { color: '#FF5733', matrix: [[1]] },                             // 1x1 Single
             { color: '#33FF57', matrix: [[1, 1]] },                          // 1x2 Horizontal
@@ -91,9 +98,8 @@
         let currentShapes = [null, null, null];
         let draggingIndex = null;
         let dragOffset = { x: 0, y: 0 };
-        let mousePos = { x: 0, y: 0 };
-
-        // --- Core Game Functions ---
+        let pointerPos = { x: 0, y: 0 };
+        let isTouchDevice = false;
 
         function initGame() {
             grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(0));
@@ -141,11 +147,10 @@
             const shape = currentShapes[index];
             if (!shape) return;
 
-            const scale = 20; // smaller preview size
+            const scale = 18;
             const rows = shape.matrix.length;
             const cols = shape.matrix[0].length;
             
-            // Center in tray canvas
             const offsetX = (trayCanvas.width - cols * scale) / 2;
             const offsetY = (trayCanvas.height - rows * scale) / 2;
 
@@ -169,10 +174,10 @@
                         const gridC = startCol + c;
 
                         if (gridR < 0 || gridR >= GRID_SIZE || gridC < 0 || gridC >= GRID_SIZE) {
-                            return false; // Out of bounds
+                            return false;
                         }
                         if (grid[gridR][gridC] !== 0) {
-                            return false; // Cell already occupied
+                            return false;
                         }
                     }
                 }
@@ -203,14 +208,10 @@
             let rowsToClear = [];
             let colsToClear = [];
 
-            // Check Rows
             for (let r = 0; r < GRID_SIZE; r++) {
-                if (grid[r].every(cell => cell !== 0)) {
-                    rowsToClear.push(r);
-                }
+                if (grid[r].every(cell => cell !== 0)) rowsToClear.push(r);
             }
 
-            // Check Columns
             for (let c = 0; c < GRID_SIZE; c++) {
                 let full = true;
                 for (let r = 0; r < GRID_SIZE; r++) {
@@ -222,53 +223,66 @@
                 if (full) colsToClear.push(c);
             }
 
-            // Clear Rows
             rowsToClear.forEach(r => {
                 for (let c = 0; c < GRID_SIZE; c++) grid[r][c] = 0;
             });
 
-            // Clear Columns
             colsToClear.forEach(c => {
                 for (let r = 0; r < GRID_SIZE; r++) grid[r][c] = 0;
             });
 
-            // Bonus points for cleared lines
             const totalCleared = rowsToClear.length + colsToClear.length;
             if (totalCleared > 0) {
                 score += totalCleared * 100;
             }
         }
 
-        // --- Mouse Drag and Drop Handlers ---
+        // --- Unified Interaction Handlers (Mouse & Touch) ---
 
-        for (let i = 0; i < 3; i++) {
-            const trayCanvas = document.getElementById(`shape${i}`);
-            
-            trayCanvas.addEventListener('mousedown', (e) => {
-                if (!currentShapes[i]) return;
-                draggingIndex = i;
-                const rect = trayCanvas.getBoundingClientRect();
-                dragOffset.x = e.clientX - rect.left;
-                dragOffset.y = e.clientY - rect.top;
-            });
+        function getPointerCoords(e) {
+            if (e.touches && e.touches.length > 0) {
+                return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }
+            return { x: e.clientX, y: e.clientY };
         }
 
-        window.addEventListener('mousemove', (e) => {
-            if (draggingIndex === null) return;
+        function handleStart(index, e) {
+            if (!currentShapes[index]) return;
+            e.preventDefault();
+            
+            isTouchDevice = e.type.startsWith('touch');
+            draggingIndex = index;
 
-            mousePos.x = e.clientX;
-            mousePos.y = e.clientY;
+            const trayCanvas = document.getElementById(`shape${index}`);
+            const rect = trayCanvas.getBoundingClientRect();
+            const coords = getPointerCoords(e);
+
+            dragOffset.x = coords.x - rect.left;
+            dragOffset.y = coords.y - rect.top;
+        }
+
+        function handleMove(e) {
+            if (draggingIndex === null) return;
+            e.preventDefault();
+
+            const coords = getPointerCoords(e);
+            pointerPos.x = coords.x;
+            pointerPos.y = coords.y;
 
             drawGrid();
 
-            // Render shape attached to cursor over main canvas
             const rect = canvas.getBoundingClientRect();
-            const shape = currentShapes[draggingIndex];
+            const scaleRatio = 320 / rect.width; // Adjust for dynamic canvas scaling
             
-            const canvasMouseX = mousePos.x - rect.left - dragOffset.x;
-            const canvasMouseY = mousePos.y - rect.top - dragOffset.y;
+            const shape = currentShapes[draggingIndex];
 
-            // Draw ghost/moving shape
+            // Touch lift offset: Lift shape slightly above finger so it remains visible
+            const fingerOffsetY = isTouchDevice ? 60 : 0;
+
+            const canvasMouseX = (pointerPos.x - rect.left - dragOffset.x) * scaleRatio;
+            const canvasMouseY = (pointerPos.y - rect.top - dragOffset.y - fingerOffsetY) * scaleRatio;
+
+            // Draw active shape dragging over board
             for (let r = 0; r < shape.matrix.length; r++) {
                 for (let c = 0; c < shape.matrix[0].length; c++) {
                     if (shape.matrix[r][c]) {
@@ -282,14 +296,18 @@
                     }
                 }
             }
-        });
+        }
 
-        window.addEventListener('mouseup', (e) => {
+        function handleEnd(e) {
             if (draggingIndex === null) return;
 
             const rect = canvas.getBoundingClientRect();
-            const dropX = e.clientX - rect.left - dragOffset.x + (CELL_SIZE / 2);
-            const dropY = e.clientY - rect.top - dragOffset.y + (CELL_SIZE / 2);
+            const scaleRatio = 320 / rect.width;
+
+            const fingerOffsetY = isTouchDevice ? 60 : 0;
+
+            const dropX = (pointerPos.x - rect.left - dragOffset.x + (CELL_SIZE / 2)) * scaleRatio;
+            const dropY = (pointerPos.y - rect.top - dragOffset.y - fingerOffsetY + (CELL_SIZE / 2)) * scaleRatio;
 
             const gridCol = Math.floor(dropX / CELL_SIZE);
             const gridRow = Math.floor(dropY / CELL_SIZE);
@@ -300,12 +318,10 @@
                 placeShape(shape, gridRow, gridCol);
                 currentShapes[draggingIndex] = null;
 
-                // Clear tray preview
                 const trayCanvas = document.getElementById(`shape${draggingIndex}`);
                 const tCtx = trayCanvas.getContext('2d');
                 tCtx.clearRect(0, 0, trayCanvas.width, trayCanvas.height);
 
-                // If all 3 shapes used, spawn 3 new ones
                 if (currentShapes.every(s => s === null)) {
                     spawnShapes();
                 }
@@ -313,9 +329,24 @@
 
             draggingIndex = null;
             drawGrid();
-        });
+        }
 
-        // Start the game
+        // Attach event listeners to tray elements
+        for (let i = 0; i < 3; i++) {
+            const trayCanvas = document.getElementById(`shape${i}`);
+            
+            trayCanvas.addEventListener('mousedown', (e) => handleStart(i, e));
+            trayCanvas.addEventListener('touchstart', (e) => handleStart(i, e), { passive: false });
+        }
+
+        // Global drag & drop movement listeners
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('touchmove', handleMove, { passive: false });
+
+        window.addEventListener('mouseup', handleEnd);
+        window.addEventListener('touchend', handleEnd);
+
+        // Start Game
         initGame();
     </script>
 </body>
