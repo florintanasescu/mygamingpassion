@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Mobile Block Puzzle Game</title>
+    <link rel="stylesheet" href="styles.css">
     <style>
         * {
             box-sizing: border-box;
@@ -112,6 +113,47 @@
             border: 2px solid #0095DD;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 149, 221, 0.3);
+        }
+        /* Navigation Bar Styling */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            border-bottom: 4px solid #0095DD;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 16px 20px;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(0, 149, 221, 0.5);
+            flex-wrap: wrap;
+            z-index: 1000;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            -webkit-user-select: none;
+            user-select: none;
+            border: 2px solid transparent;
+            background-color: rgba(0, 149, 221, 0.2);
+        }
+        nav a:hover {
+            background-color: #0095DD;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 149, 221, 0.4);
+        }
+        nav a.active {
+            background-color: #0095DD;
+            border: 2px solid #fff;
+            box-shadow: 0 0 12px rgba(0, 149, 221, 0.6);
         }
     </style>
 </head>
