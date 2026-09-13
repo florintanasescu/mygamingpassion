@@ -7,7 +7,7 @@
 
 /* Navigation Bar */
 nav {
-    position: fixed;
+    position: flex;
     top: 0;
     left: 0;
     right: 0;
@@ -113,6 +113,7 @@ audio {
     border: 2px solid #0095DD;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 149, 221, 0.3);
+    display: flex;
 }
 
 /* YouTube Video Container */
