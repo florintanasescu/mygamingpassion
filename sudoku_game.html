@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Sudoku Game</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="bg-container">
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="tiles_game.html">Tiles Game</a>
+        <a href="blocks_game.html">Blocks Game</a>
+        <a href="sudoku_game.html" class="active">Sudoku</a>
+    </nav>
+
+    <audio type="audio/mp3" src="sounds/bg_music.mp3" controls autoplay loop unmute></audio>
+
+    <div class="score-board">Difficulty: <span id="difficulty-label">Easy</span></div>
+
+    <div id="sudoku-container">
+        <!-- 9x9 Sudoku Board -->
+        <div id="sudoku-grid"></div>
+
+        <!-- Touch/Click Keypad for Mobile Input -->
+        <div class="keypad">
+            <button onclick="inputNumber(1)">1</button>
+            <button onclick="inputNumber(2)">2</button>
+            <button onclick="inputNumber(3)">3</button>
+            <button onclick="inputNumber(4)">4</button>
+            <button onclick="inputNumber(5)">5</button>
+            <button onclick="inputNumber(6)">6</button>
+            <button onclick="inputNumber(7)">7</button>
+            <button onclick="inputNumber(8)">8</button>
+            <button onclick="inputNumber(9)">9</button>
+            <button class="erase-btn" onclick="inputNumber(0)"><i class="fas fa-erase"></i> ⌫</button>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <button id="newGameBtn">New Game</button>
+        <button id="solveBtn">Solve</button>
+    </div>
+
+    <div class="instructions">
+        <div id="desktopInstructions">Click a cell and use keyboard numbers (1-9) or screen buttons. Press Backspace/Delete to clear.</div>
+        <div id="mobileInstructions" style="display: none;">Tap a cell and choose a number from the keypad below.</div>
+    </div>
+
+    <script>
+        // Device Detection
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                         (window.innerWidth < 768 && window.matchMedia("(hover: none)").matches);
+
+        if (isMobile) {
+            document.getElementById("desktopInstructions").style.display = "none";
+            document.getElementById("mobileInstructions").style.display = "block";
+        }
+
+        // Base Sudoku Generator & Solver Logic
+        const gridElement = document.getElementById("sudoku-grid");
+        let selectedCell = null;
+        let board = Array(9).fill(null).map(() => Array(9).fill(0));
+        let solution = Array(9).fill(null).map(() => Array(9).fill(0));
+        let initialBoard = Array(9).fill(null).map(() => Array(9).fill(0));
+
+        function isValid(bd, r, c, k) {
+            for (let i = 0; i < 9; i++) {
+                const m = 3 * Math.floor(r / 3) + Math.floor(i / 3);
+                const n = 3 * Math.floor(c / 3) + i % 3;
+                if (bd[r][i] === k || bd[i][c] === k || bd[m][n] === k) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function solveSudoku(bd) {
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (bd[r][c] === 0) {
+                        let nums = [1,2,3,4,5,6,7,8,9].sort(() => Math.random() - 0.5);
+                        for (let k of nums) {
+                            if (isValid(bd, r, c, k)) {
+                                bd[r][c] = k;
+                                if (solveSudoku(bd)) return true;
+                                bd[r][c] = 0;
+                            }
+                        }
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function generateBoard() {
+            board = Array(9).fill(null).map(() => Array(9).fill(0));
+            solveSudoku(board);
+            solution = board.map(row => [...row]);
+
+            let removals = 35;
+            initialBoard = board.map(row => [...row]);
+            while (removals > 0) {
+                let r = Math.floor(Math.random() * 9);
+                let c = Math.floor(Math.random() * 9);
+                if (initialBoard[r][c] !== 0) {
+                    initialBoard[r][c] = 0;
+                    removals--;
+                }
+            }
+            board = initialBoard.map(row => [...row]);
+            renderGrid();
+        }
+
+        function renderGrid() {
+            gridElement.innerHTML = "";
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const cell = document.createElement("div");
+                    cell.classList.add("sudoku-cell");
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+
+                    if (initialBoard[r][c] !== 0) {
+                        cell.innerText = initialBoard[r][c];
+                        cell.classList.add("fixed");
+                    } else if (board[r][c] !== 0) {
+                        cell.innerText = board[r][c];
+                        if (board[r][c] !== solution[r][c]) {
+                            cell.classList.add("error");
+                        }
+                    }
+
+                    cell.addEventListener("click", () => selectCell(r, c));
+                    gridElement.appendChild(cell);
+                }
+            }
+        }
+
+        function selectCell(r, c) {
+            selectedCell = { r, c };
+            const cells = document.querySelectorAll(".sudoku-cell");
+            
+            cells.forEach(cell => {
+                const cellR = parseInt(cell.dataset.row);
+                const cellC = parseInt(cell.dataset.col);
+
+                cell.classList.remove("selected", "highlighted");
+
+                if (cellR === r && cellC === c) {
+                    cell.classList.add("selected");
+                } else if (cellR === r || cellC === c || 
+                          (Math.floor(cellR / 3) === Math.floor(r / 3) && Math.floor(cellC / 3) === Math.floor(c / 3))) {
+                    cell.classList.add("highlighted");
+                }
+            });
+        }
+
+        function inputNumber(num) {
+            if (!selectedCell) return;
+            const { r, c } = selectedCell;
+
+            if (initialBoard[r][c] !== 0) return;
+
+            board[r][c] = num;
+            renderGrid();
+            selectCell(r, c);
+            checkWinState();
+        }
+
+        function checkWinState() {
+            let isComplete = true;
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (board[r][c] !== solution[r][c]) {
+                        isComplete = false;
+                        break;
+                    }
+                }
+            }
+            if (isComplete) {
+                setTimeout(() => alert("Congratulations! You solved the Sudoku puzzle!"), 100);
+            }
+        }
+
+        document.addEventListener("keydown", (e) => {
+            if (!selectedCell) return;
+            let { r, c } = selectedCell;
+
+            if (e.key >= "1" && e.key <= "9") {
+                inputNumber(parseInt(e.key));
+            } else if (e.key === "Backspace" || e.key === "Delete" || e.key === "0") {
+                inputNumber(0);
+            } else if (e.key === "ArrowUp" && r > 0) selectCell(r - 1, c);
+            else if (e.key === "ArrowDown" && r < 8) selectCell(r + 1, c);
+            else if (e.key === "ArrowLeft" && c > 0) selectCell(r, c - 1);
+            else if (e.key === "ArrowRight" && c < 8) selectCell(r, c + 1);
+        });
+
+        document.getElementById("newGameBtn").addEventListener("click", generateBoard);
+        document.getElementById("solveBtn").addEventListener("click", () => {
+            board = solution.map(row => [...row]);
+            renderGrid();
+        });
+
+        generateBoard();
+    </script>
+
+    <!-- Social Links Bar -->
+    <div class="social-links">
+        <a href="https://www.facebook.com/florin.tanasescu.ro/" target="_blank"><i class="fab fa-facebook"></i></a>
+        <a href="https://www.youtube.com/@snalftw" target="_blank"><i class="fab fa-youtube"></i></a>
+        <a href="https://www.instagram.com/florin.tanasescu.ro/" target="_blank"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.twitch.tv/flo_rao" target="_blank"><i class="fab fa-twitch"></i></a>
+        <a href="https://x.com/FTnssq" target="_blank"><i class="fab fa-x-twitter"></i></a>
+    </div>
+</body>
+</html>

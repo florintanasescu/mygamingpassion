@@ -11,7 +11,7 @@ nav {
     top: 0;
     left: 0;
     right: 0;
-    background:transparent;
+    background: transparent;
     border-bottom: 4px solid #0095DD;
     display: flex;
     justify-content: center;
@@ -318,6 +318,112 @@ button:disabled {
     line-height: 1.4;
 }
 
+/* Sudoku Styles */
+#sudoku-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 360px;
+    margin: 10px auto;
+}
+
+#sudoku-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    grid-template-rows: repeat(9, 1fr);
+    width: 320px;
+    height: 320px;
+    max-width: 90vw;
+    max-height: 90vw;
+    border: 3px solid #0095DD;
+    background-color: #12121c;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.sudoku-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #1e1e2f;
+    border: 1px solid #2a2a40;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+/* Thick 3x3 Sub-grid Borders */
+.sudoku-cell:nth-child(3n) {
+    border-right: 2px solid #0095DD;
+}
+.sudoku-cell:nth-child(9n) {
+    border-right: 1px solid #2a2a40;
+}
+.sudoku-cell[data-row="2"], 
+.sudoku-cell[data-row="5"] {
+    border-bottom: 2px solid #0095DD;
+}
+
+/* Cell Selection & States */
+.sudoku-cell.fixed {
+    color: #4ac3e7;
+    background-color: #161625;
+    cursor: default;
+}
+
+.sudoku-cell.selected {
+    background-color: #0095DD !important;
+    color: #ffffff !important;
+}
+
+.sudoku-cell.highlighted {
+    background-color: rgba(0, 149, 221, 0.2);
+}
+
+.sudoku-cell.error {
+    color: #ff6b6b;
+    background-color: rgba(255, 107, 107, 0.2);
+}
+
+/* Mobile Responsiveness Keypad */
+.keypad {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    width: 320px;
+    max-width: 90vw;
+    margin-top: 15px;
+}
+
+.keypad button {
+    min-width: unset;
+    padding: 12px 0;
+    font-size: 16px;
+    font-weight: bold;
+    background-color: rgba(74, 195, 231, 0.877);
+    border: 1px solid #0095DD;
+}
+
+.keypad button:hover {
+    background-color: #0095DD;
+}
+
+.keypad button.erase-btn {
+    background-color: #ff6b6b;
+    border-color: #ff5252;
+    grid-column: span 1;
+}
+
+.keypad button.erase-btn:hover {
+    background-color: #ff5252;
+}
+
 /* Mobile Responsive Adjustments */
 @media (max-width: 768px) {
     html {
@@ -364,6 +470,20 @@ button:disabled {
     canvas {
         margin-top: 5px;
         margin-bottom: 5px;
+    }
+
+    #sudoku-grid {
+        width: 300px;
+        height: 300px;
+    }
+
+    .sudoku-cell {
+        font-size: 16px;
+    }
+
+    .keypad button {
+        padding: 10px 0;
+        font-size: 14px;
     }
 
     .controls {
