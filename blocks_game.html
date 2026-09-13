@@ -56,6 +56,46 @@
             border-radius: 6px;
             border: 1px solid #3a3a5a;
         }
+        .shape-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        .rotate-btn {
+            background-color: #3a3a5a;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+        .rotate-btn:hover {
+            background-color: #4a4a7a;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            width: 100%;
+            justify-content: center;
+        }
+        .reset-btn {
+            background-color: #ff6b6b;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .reset-btn:hover {
+            background-color: #ff5252;
+        }
     </style>
 </head>
 <body>
@@ -68,9 +108,23 @@
     
     <!-- Tray holding the 3 available shapes -->
     <div id="tray">
-        <canvas id="shape0" class="shape-preview" width="90" height="90"></canvas>
-        <canvas id="shape1" class="shape-preview" width="90" height="90"></canvas>
-        <canvas id="shape2" class="shape-preview" width="90" height="90"></canvas>
+        <div class="shape-container">
+            <canvas id="shape0" class="shape-preview" width="90" height="90"></canvas>
+            <button class="rotate-btn" id="rotate0">↻ Rotate</button>
+        </div>
+        <div class="shape-container">
+            <canvas id="shape1" class="shape-preview" width="90" height="90"></canvas>
+            <button class="rotate-btn" id="rotate1">↻ Rotate</button>
+        </div>
+        <div class="shape-container">
+            <canvas id="shape2" class="shape-preview" width="90" height="90"></canvas>
+            <button class="rotate-btn" id="rotate2">↻ Rotate</button>
+        </div>
+    </div>
+
+    <!-- Control Buttons -->
+    <div class="button-group">
+        <button class="reset-btn" id="reset-btn">Give up and reset</button>
     </div>
 
     <script>
@@ -96,6 +150,8 @@
         ];
 
         let currentShapes = [null, null, null];
+        let shapeRotations = [0, 0, 0]; // Track rotation state for each shape
+        let usedShapeIndices = new Set(); // Track which shape types have been used
         let draggingIndex = null;
         let dragOffset = { x: 0, y: 0 };
         let pointerPos = { x: 0, y: 0 };
@@ -105,8 +161,40 @@
             grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(0));
             score = 0;
             scoreElement.innerText = score;
+            usedShapeIndices.clear();
+            shapeRotations = [0, 0, 0];
             spawnShapes();
             drawGrid();
+        }
+
+        // Rotate a matrix 90 degrees clockwise
+        function rotateMatrix(matrix) {
+            const rows = matrix.length;
+            const cols = matrix[0].length;
+            const rotated = Array(cols).fill(null).map(() => Array(rows).fill(0));
+            
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    rotated[c][rows - 1 - r] = matrix[r][c];
+                }
+            }
+            return rotated;
+        }
+
+        // Rotate a shape by applying rotation matrix multiple times
+        function getRotatedShape(shapeIndex, rotationTimes) {
+            const baseShape = SHAPES[shapeIndex];
+            let matrix = JSON.parse(JSON.stringify(baseShape.matrix));
+            
+            const times = rotationTimes % 4; // Only need 0-3 rotations for 90 degree steps
+            for (let i = 0; i < times; i++) {
+                matrix = rotateMatrix(matrix);
+            }
+            
+            return {
+                color: baseShape.color,
+                matrix: matrix
+            };
         }
 
         function drawGrid() {
@@ -133,8 +221,31 @@
 
         function spawnShapes() {
             for (let i = 0; i < 3; i++) {
-                const randomShape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-                currentShapes[i] = JSON.parse(JSON.stringify(randomShape));
+                if (currentShapes[i] !== null) continue; // Skip already placed shapes
+                
+                // Find a shape that hasn't been used yet
+                let shapeIndex;
+                let attempts = 0;
+                do {
+                    shapeIndex = Math.floor(Math.random() * SHAPES.length);
+                    attempts++;
+                } while (usedShapeIndices.has(shapeIndex) && attempts < 100);
+                
+                // If all shapes have been used (or after 100 attempts), reset the used list
+                if (attempts >= 100) {
+                    usedShapeIndices.clear();
+                    shapeIndex = Math.floor(Math.random() * SHAPES.length);
+                }
+                
+                usedShapeIndices.add(shapeIndex);
+                
+                // Store both the shape index and the original shape (not rotated yet)
+                currentShapes[i] = {
+                    shapeIndex: shapeIndex,
+                    baseShape: JSON.parse(JSON.stringify(SHAPES[shapeIndex]))
+                };
+                
+                shapeRotations[i] = 0; // Reset rotation
                 drawTrayShape(i);
             }
         }
@@ -144,8 +255,12 @@
             const tCtx = trayCanvas.getContext('2d');
             tCtx.clearRect(0, 0, trayCanvas.width, trayCanvas.height);
 
-            const shape = currentShapes[index];
-            if (!shape) return;
+            const shapeData = currentShapes[index];
+            if (!shapeData) return;
+
+            // Get the rotated shape based on current rotation
+            const rotatedShape = getRotatedShape(shapeData.shapeIndex, shapeRotations[index]);
+            const shape = rotatedShape;
 
             const scale = 18;
             const rows = shape.matrix.length;
@@ -274,7 +389,8 @@
             const rect = canvas.getBoundingClientRect();
             const scaleRatio = 320 / rect.width; // Adjust for dynamic canvas scaling
             
-            const shape = currentShapes[draggingIndex];
+            const shapeData = currentShapes[draggingIndex];
+            const rotatedShape = getRotatedShape(shapeData.shapeIndex, shapeRotations[draggingIndex]);
 
             // Touch lift offset: Lift shape slightly above finger so it remains visible
             const fingerOffsetY = isTouchDevice ? 60 : 0;
@@ -283,15 +399,15 @@
             const canvasMouseY = (pointerPos.y - rect.top - dragOffset.y - fingerOffsetY) * scaleRatio;
 
             // Draw active shape dragging over board
-            for (let r = 0; r < shape.matrix.length; r++) {
-                for (let c = 0; c < shape.matrix[0].length; c++) {
-                    if (shape.matrix[r][c]) {
+            for (let r = 0; r < rotatedShape.matrix.length; r++) {
+                for (let c = 0; c < rotatedShape.matrix[0].length; c++) {
+                    if (rotatedShape.matrix[r][c]) {
                         drawCell(
                             ctx, 
                             canvasMouseX + c * CELL_SIZE, 
                             canvasMouseY + r * CELL_SIZE, 
                             CELL_SIZE, 
-                            shape.color
+                            rotatedShape.color
                         );
                     }
                 }
@@ -312,10 +428,13 @@
             const gridCol = Math.floor(dropX / CELL_SIZE);
             const gridRow = Math.floor(dropY / CELL_SIZE);
 
-            const shape = currentShapes[draggingIndex];
+            const shapeData = currentShapes[draggingIndex];
+            
+            // Get the rotated shape for placement
+            const rotatedShape = getRotatedShape(shapeData.shapeIndex, shapeRotations[draggingIndex]);
 
-            if (canPlaceShape(shape, gridRow, gridCol)) {
-                placeShape(shape, gridRow, gridCol);
+            if (canPlaceShape(rotatedShape, gridRow, gridCol)) {
+                placeShape(rotatedShape, gridRow, gridCol);
                 currentShapes[draggingIndex] = null;
 
                 const trayCanvas = document.getElementById(`shape${draggingIndex}`);
@@ -337,7 +456,22 @@
             
             trayCanvas.addEventListener('mousedown', (e) => handleStart(i, e));
             trayCanvas.addEventListener('touchstart', (e) => handleStart(i, e), { passive: false });
+
+            // Add rotation button listener
+            const rotateBtn = document.getElementById(`rotate${i}`);
+            rotateBtn.addEventListener('click', () => {
+                if (currentShapes[i] !== null) {
+                    shapeRotations[i] = (shapeRotations[i] + 1) % 4;
+                    drawTrayShape(i);
+                }
+            });
         }
+
+        // Add reset button listener
+        const resetBtn = document.getElementById('reset-btn');
+        resetBtn.addEventListener('click', () => {
+            initGame();
+        });
 
         // Global drag & drop movement listeners
         window.addEventListener('mousemove', handleMove);
