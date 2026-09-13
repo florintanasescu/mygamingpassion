@@ -7,11 +7,12 @@
 
 /* Navigation Bar */
 nav {
-    position: flex;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+    /* background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%); */
+    background: transparent;
     border-bottom: 4px solid #0095DD;
     display: flex;
     justify-content: center;
@@ -35,7 +36,7 @@ nav a {
     -webkit-user-select: none;
     user-select: none;
     border: 2px solid transparent;
-    background-color: rgba(0, 149, 221, 0.2);
+    background-color: rgba(74, 195, 231, 0.877);
 }
 
 nav a:hover {
@@ -50,10 +51,6 @@ nav a.active {
     box-shadow: 0 0 12px rgba(0, 149, 221, 0.6);
 }
 
-body {
-    padding-top: 90px;
-}
-
 html {
     width: 100%;
     height: 100%;
@@ -63,8 +60,8 @@ html {
 
 /* Base Body Styles */
 body {
-    background-color: #111;
-    color: #fff;
+    background-color: #1e1e2f;
+    color: #ffffff;
     font-family: Arial, sans-serif;
     display: flex;
     flex-direction: column;
@@ -73,9 +70,8 @@ body {
     min-height: 100vh;
     width: 100%;
     margin: 0;
-    padding: 20px 8px 8px 8px;
-    overflow-x: hidden;
-    overflow-y: auto;
+    padding: 110px 10px 10px 10px;
+    overflow: hidden; /* Prevent bouncing on iOS/Android */
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -90,7 +86,7 @@ body {
 h1 {
     margin: 20px 0 15px 0;
     font-size: 32px;
-    color: #0095DD;
+    color: #6e0758;
     text-shadow: 0 2px 8px rgba(0, 149, 221, 0.5);
     padding-bottom: 10px;
     border-bottom: 2px solid #0095DD;
@@ -220,6 +216,59 @@ canvas {
     border-radius: 6px;
     border: 1px solid #3a3a5a;
     box-shadow: none; /* Clears general canvas shadow for tray previews */
+}
+
+.shape-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.rotate-btn {
+    background-color: #3a3a5a;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    min-width: auto;
+}
+
+.rotate-btn:hover {
+    background-color: #4a4a7a;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    width: 100%;
+    justify-content: center;
+}
+
+.reset-btn {
+    background-color: #ff6b6b;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background-color 0.2s;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.reset-btn:hover {
+    background-color: #ff5252;
 }
 
 /* Controls & Buttons */
