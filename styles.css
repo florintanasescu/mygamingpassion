@@ -99,6 +99,10 @@ h1 {
     background-color: #011018;
     border-radius: 6px;
     border: 1px solid #0095DD;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Audio Player */

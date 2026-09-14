@@ -16,7 +16,16 @@
     </nav>
     <audio type="audio/mp3" src="sounds/bg_music.mp3" controls loop unmute></audio>
     
-    <div class="score-board">Score: <span id="score">0</span></div>
+    <!-- Audio Elements for Sound Effects -->
+    <audio id="sound-shape-click" src="sounds/shape_click.mp3" preload="auto"></audio>
+    <audio id="sound-3liner" src="sounds/3liner.mp3" preload="auto"></audio>
+    <audio id="sound-level-up" src="sounds/level_up.mp3" preload="auto"></audio>
+    <audio id="sound-all-clear" src="sounds/all_clear.mp3" preload="auto"></audio>
+
+    <!-- Score & Level Board in the same div -->
+    <div class="score-board">
+        Score: <span id="score">0</span> | Level: <span id="level">1</span>
+    </div>
     
     <!-- Main 8x8 Grid Canvas -->
     <canvas id="game-board" width="320" height="320"></canvas>
@@ -48,8 +57,23 @@
         const canvas = document.getElementById('game-board');
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
+        const levelElement = document.getElementById('level');
+
+        // Audio Elements
+        const soundShapeClick = document.getElementById('sound-shape-click');
+        const sound3Liner = document.getElementById('sound-3liner');
+        const soundLevelUp = document.getElementById('sound-level-up');
+        const soundAllClear = document.getElementById('sound-all-clear');
+
+        function playSound(audio) {
+            if (audio) {
+                audio.currentTime = 0;
+                audio.play().catch(e => console.log('Audio playback prevented:', e));
+            }
+        }
 
         let score = 0;
+        let level = 1;
         let grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(0));
 
         const SHAPES = [
@@ -79,7 +103,9 @@
         function initGame() {
             grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(0));
             score = 0;
+            level = 1;
             scoreElement.innerText = score;
+            levelElement.innerText = level;
             usedShapeIndices.clear();
             shapeRotations = [0, 0, 0];
             spawnShapes();
@@ -219,6 +245,23 @@
             return true;
         }
 
+        function addScore(points) {
+            const oldScore = score;
+            score += points;
+
+            // Check if user leveled up (every 1000 points)
+            const oldLevel = Math.floor(oldScore / 1000) + 1;
+            const newLevel = Math.floor(score / 1000) + 1;
+
+            scoreElement.innerText = score;
+
+            if (newLevel > oldLevel) {
+                level = newLevel;
+                levelElement.innerText = level;
+                playSound(soundLevelUp);
+            }
+        }
+
         function placeShape(shape, startRow, startCol) {
             const rows = shape.matrix.length;
             const cols = shape.matrix[0].length;
@@ -233,9 +276,11 @@
                 }
             }
 
-            score += placedCells * 10;
+            // Play shape deployment sound
+            playSound(soundShapeClick);
+
+            addScore(placedCells * 10);
             checkLines();
-            scoreElement.innerText = score;
         }
 
         function checkLines() {
@@ -267,7 +312,18 @@
 
             const totalCleared = rowsToClear.length + colsToClear.length;
             if (totalCleared > 0) {
-                score += totalCleared * 100;
+                addScore(totalCleared * 100);
+
+                // Play 3liner.mp3 if 3 or more lines cleared at once
+                if (totalCleared >= 3) {
+                    playSound(sound3Liner);
+                }
+
+                // Check if the grid is completely cleared
+                const isGridEmpty = grid.every(row => row.every(cell => cell === 0));
+                if (isGridEmpty) {
+                    playSound(soundAllClear);
+                }
             }
         }
 
@@ -403,30 +459,30 @@
         initGame();
     </script>
 
-        <div class="social-links">
-    <!-- Facebook Link -->
-    <a href="https://www.facebook.com/florin.tanasescu.ro/" target="_blank">
-        <i class="fab fa-facebook"></i>
-    </a>
+    <div class="social-links">
+        <!-- Facebook Link -->
+        <a href="https://www.facebook.com/florin.tanasescu.ro/" target="_blank">
+            <i class="fab fa-facebook"></i>
+        </a>
 
-    <!-- YouTube Link -->
-    <a href="https://www.youtube.com/@snalftw" target="_blank">
-        <i class="fab fa-youtube"></i>
-    </a>
+        <!-- YouTube Link -->
+        <a href="https://www.youtube.com/@snalftw" target="_blank">
+            <i class="fab fa-youtube"></i>
+        </a>
 
-    <!-- Instagram Link -->
-    <a href="https://www.instagram.com/florin.tanasescu.ro/" target="_blank">
-        <i class="fab fa-instagram"></i>
-    </a>
+        <!-- Instagram Link -->
+        <a href="https://www.instagram.com/florin.tanasescu.ro/" target="_blank">
+            <i class="fab fa-instagram"></i>
+        </a>
 
-    <!-- Twitch Link -->
-    <a href="https://www.twitch.tv/flo_rao" target="_blank">
-        <i class="fab fa-twitch"></i>
-    </a>
-    <!-- X (Twitter) Link -->
-    <a href="https://x.com/FTnssq" target="_blank">
-        <i class="fab fa-x-twitter"></i>
-    </a>
+        <!-- Twitch Link -->
+        <a href="https://www.twitch.tv/flo_rao" target="_blank">
+            <i class="fab fa-twitch"></i>
+        </a>
+        <!-- X (Twitter) Link -->
+        <a href="https://x.com/FTnssq" target="_blank">
+            <i class="fab fa-x-twitter"></i>
+        </a>
     </div>
 </body>
 </html>
