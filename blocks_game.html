@@ -59,9 +59,13 @@
             { color: '#F3FF33', matrix: [[1, 1], [1, 1]] },                  // 2x2 Square
             { color: '#FF33F3', matrix: [[1, 1, 1]] },                       // 1x3 Horizontal
             { color: '#33FFF3', matrix: [[1], [1], [1]] },                   // 3x1 Vertical
+            { color: '#FF5530', matrix: [[0, 1, 1], [1, 1, 0]] },            // Z shape
+            { color: '#FF5530', matrix: [[1, 1, 1], [1, 0, 0]] },            // Smal L shape right
+            { color: '#FF5530', matrix: [[1, 1, 1], [0, 0, 1]] },            // Smal L shape left
             { color: '#FFA500', matrix: [[1, 1, 1], [0, 1, 0]] },            // T-shape
-            { color: '#9933FF', matrix: [[1, 0], [1, 0], [1, 1]] },          // L-shape
-            { color: '#FF3380', matrix: [[1, 1, 1], [1, 1, 1], [1, 1, 1]] }   // 3x3 Block
+            { color: '#9933FF', matrix: [[1, 0], [1, 0], [1, 1]] },          // L-shape right
+            { color: '#9933FF', matrix: [[0, 1], [0, 1], [1, 1]] },          // L-shape left
+            { color: '#FF3380', matrix: [[1, 1, 1], [1, 1, 1], [1, 1, 1]] },   // 3x3 Block
         ];
 
         let currentShapes = [null, null, null];
