@@ -187,7 +187,7 @@ canvas {
 
 /* Block Puzzle Main Board */
 #game-board {
-    border: 4px solid #3a3a5a;
+    border: 6px solid #3a3a5a;
     border-radius: 8px;
     background-color: #12121c;
     box-shadow: 0 8px 16px rgba(0,0,0,0.5);
