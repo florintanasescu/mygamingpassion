@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Snake Game</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body class="bg-container">
+
+    <nav>
+        <a href="index.html" class="active">Home</a>
+        <a href="tiles_game.html" class="active">Tiles Game</a>
+        <a href="blocks_game.html" class="active">Blocks Game</a>
+        <a href="sudoku_game.html" class="active">Sudoku</a>
+        <a href="snake_game.html" class="active">Snake</a>
+    </nav>
+
+    <audio type="audio/mp3" src="sounds/bg_music.mp3" controls loop unmute></audio>
+
+    <h1>Snake</h1>
+
+    <div class="score-board">
+        <span>Score: <strong id="score">0</strong></span>
+        <span>|</span>
+        <span>High Score: <strong id="high-score">0</strong></span>
+    </div>
+
+    <canvas id="game-board" width="480" height="480"></canvas>
+
+    <div id="game-message" class="instructions">
+        Press an arrow key or WASD to start.
+    </div>
+
+    <div class="controls">
+        <button id="up-btn" aria-label="Move up">▲</button>
+        <button id="left-btn" aria-label="Move left">◀</button>
+        <button id="down-btn" aria-label="Move down">▼</button>
+        <button id="right-btn" aria-label="Move right">▶</button>
+    </div>
+
+    <div class="button-group">
+        <button class="reset-btn" id="reset-btn">New Game</button>
+    </div>
+
+    <div class="instructions">
+        Eat the food and grow the snake.<br>
+        Avoid the walls and your own body.
+    </div>
+
+    <div class="social-links">
+        <a href="https://www.facebook.com/florin.tanasescu.ro/" target="_blank">
+            <i class="fab fa-facebook"></i>
+        </a>
+        <a href="https://www.youtube.com/@snalftw" target="_blank">
+            <i class="fab fa-youtube"></i>
+        </a>
+        <a href="https://www.instagram.com/florin.tanasescu.ro/" target="_blank">
+            <i class="fab fa-instagram"></i>
+        </a>
+        <a href="https://www.twitch.tv/flo_rao" target="_blank">
+            <i class="fab fa-twitch"></i>
+        </a>
+        <a href="https://x.com/FTnssq" target="_blank">
+            <i class="fab fa-x-twitter"></i>
+        </a>
+    </div>
+
+<script>
+const canvas = document.getElementById("game-board");
+const ctx = canvas.getContext("2d");
+
+const scoreElement = document.getElementById("score");
+const highScoreElement = document.getElementById("high-score");
+const messageElement = document.getElementById("game-message");
+
+const GRID_SIZE = 24;
+const CELL_SIZE = canvas.width / GRID_SIZE;
+
+let snake;
+let food;
+let direction;
+let nextDirection;
+let score = 0;
+let highScore = Number(localStorage.getItem("snakeHighScore") || 0);
+let gameLoop = null;
+let gameRunning = false;
+let gameOver = false;
+
+highScoreElement.textContent = highScore;
+
+function initGame() {
+    clearInterval(gameLoop);
+
+    snake = [
+        { x: 12, y: 12 },
+        { x: 11, y: 12 },
+        { x: 10, y: 12 }
+    ];
+
+    direction = { x: 1, y: 0 };
+    nextDirection = { x: 1, y: 0 };
+    score = 0;
+    gameRunning = false;
+    gameOver = false;
+
+    scoreElement.textContent = score;
+    messageElement.textContent = "Press an arrow key or WASD to start.";
+
+    createFood();
+    draw();
+}
+
+function createFood() {
+    do {
+        food = {
+            x: Math.floor(Math.random() * GRID_SIZE),
+            y: Math.floor(Math.random() * GRID_SIZE)
+        };
+    } while (snake.some(segment => segment.x === food.x && segment.y === food.y));
+}
+
+function startGame() {
+    if (gameOver) {
+        initGame();
+    }
+
+    if (!gameRunning) {
+        gameRunning = true;
+        messageElement.textContent = "";
+        gameLoop = setInterval(update, 110);
+    }
+}
+
+function changeDirection(x, y) {
+    // Prevent an immediate 180-degree turn.
+    if (x === -direction.x && y === -direction.y) {
+        return;
+    }
+
+    nextDirection = { x, y };
+    startGame();
+}
+
+function update() {
+    direction = nextDirection;
+
+    const head = {
+        x: snake[0].x + direction.x,
+        y: snake[0].y + direction.y
+    };
+
+    // Wall collision.
+    if (
+        head.x < 0 ||
+        head.x >= GRID_SIZE ||
+        head.y < 0 ||
+        head.y >= GRID_SIZE
+    ) {
+        endGame();
+        return;
+    }
+
+    const eating = head.x === food.x && head.y === food.y;
+
+    // If not eating, the tail moves away, so it is excluded from
+    // the collision check.
+    const bodyToCheck = eating ? snake : snake.slice(0, -1);
+
+    if (bodyToCheck.some(segment => segment.x === head.x && segment.y === head.y)) {
+        endGame();
+        return;
+    }
+
+    snake.unshift(head);
+
+    if (eating) {
+        score += 10;
+        scoreElement.textContent = score;
+
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem("snakeHighScore", highScore);
+            highScoreElement.textContent = highScore;
+        }
+
+        createFood();
+
+        // Gradually increase speed.
+        clearInterval(gameLoop);
+        const speed = Math.max(55, 110 - Math.floor(score / 50) * 5);
+        gameLoop = setInterval(update, speed);
+    } else {
+        snake.pop();
+    }
+
+    draw();
+}
+
+function endGame() {
+    clearInterval(gameLoop);
+    gameLoop = null;
+    gameRunning = false;
+    gameOver = true;
+    messageElement.textContent = "Game Over! Press an arrow key or New Game.";
+    draw(true);
+}
+
+function draw(gameEnded = false) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Grid.
+    ctx.strokeStyle = "#2a2a40";
+    ctx.lineWidth = 1;
+
+    for (let i = 0; i <= GRID_SIZE; i++) {
+        const p = i * CELL_SIZE;
+
+        ctx.beginPath();
+        ctx.moveTo(p, 0);
+        ctx.lineTo(p, canvas.height);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(0, p);
+        ctx.lineTo(canvas.width, p);
+        ctx.stroke();
+    }
+
+    // Food.
+    ctx.fillStyle = "#ff6b6b";
+    ctx.beginPath();
+    ctx.arc(
+        food.x * CELL_SIZE + CELL_SIZE / 2,
+        food.y * CELL_SIZE + CELL_SIZE / 2,
+        CELL_SIZE * 0.34,
+        0,
+        Math.PI * 2
+    );
+    ctx.fill();
+
+    // Snake.
+    snake.forEach((segment, index) => {
+        ctx.fillStyle = index === 0 ? "#4ac3e7" : "#0095DD";
+
+        ctx.fillRect(
+            segment.x * CELL_SIZE + 2,
+            segment.y * CELL_SIZE + 2,
+            CELL_SIZE - 4,
+            CELL_SIZE - 4
+        );
+
+        ctx.strokeStyle = "rgba(255,255,255,0.25)";
+        ctx.strokeRect(
+            segment.x * CELL_SIZE + 3,
+            segment.y * CELL_SIZE + 3,
+            CELL_SIZE - 6,
+            CELL_SIZE - 6
+        );
+    });
+
+    if (gameEnded) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+}
+
+// Keyboard controls.
+document.addEventListener("keydown", event => {
+    const keys = {
+        ArrowUp: [0, -1],
+        ArrowDown: [0, 1],
+        ArrowLeft: [-1, 0],
+        ArrowRight: [1, 0],
+        w: [0, -1],
+        W: [0, -1],
+        s: [0, 1],
+        S: [0, 1],
+        a: [-1, 0],
+        A: [-1, 0],
+        d: [1, 0],
+        D: [1, 0]
+    };
+
+    if (keys[event.key]) {
+        event.preventDefault();
+        changeDirection(...keys[event.key]);
+    }
+});
+
+// On-screen controls.
+document.getElementById("up-btn").addEventListener("click", () => changeDirection(0, -1));
+document.getElementById("down-btn").addEventListener("click", () => changeDirection(0, 1));
+document.getElementById("left-btn").addEventListener("click", () => changeDirection(-1, 0));
+document.getElementById("right-btn").addEventListener("click", () => changeDirection(1, 0));
+
+document.getElementById("reset-btn").addEventListener("click", initGame);
+
+// Prevent accidental scrolling while using the game controls.
+document.querySelectorAll(".controls button").forEach(button => {
+    button.addEventListener("touchstart", event => event.preventDefault(), { passive: false });
+});
+
+initGame();
+</script>
+
+</body>
+</html>
