@@ -428,6 +428,59 @@ button:disabled {
     background-color: #ff5252;
 }
 
+.snake-dpad {
+    display: grid;
+    grid-template-columns: repeat(3, 55px);
+    grid-template-rows: repeat(3, 55px);
+    gap: 6px;
+    margin: 15px auto;
+    justify-content: center;
+    align-items: center;
+}
+
+.dpad-btn {
+    width: 55px;
+    height: 55px;
+    padding: 0;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 8px;
+    background-color: rgba(74, 195, 231, 0.88);
+    border: 2px solid #0095DD;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: unset;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+.dpad-btn:active {
+    background-color: #0095DD;
+    transform: scale(0.92);
+}
+
+.dpad-btn.up {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.dpad-btn.left {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.dpad-btn.down {
+    grid-column: 2;
+    grid-row: 3;
+}
+
+.dpad-btn.right {
+    grid-column: 3;
+    grid-row: 2;
+}
+
 /* Mobile Responsive Adjustments */
 @media (max-width: 768px) {
     html {
