@@ -31,10 +31,10 @@
     <canvas id="game-board" width="480" height="480"></canvas>
 
     <div id="game-message" class="instructions">
-        Press an arrow key, WASD, or swipe to start.
+        Press an arrow key, WASD, or tap to start.
     </div>
 
-    <!-- On-screen Mobile D-Pad Controls -->
+    <!-- Mobile / On-screen D-Pad Controls -->
     <div class="snake-dpad">
         <button id="up-btn" class="dpad-btn up" aria-label="Move up">▲</button>
         <button id="left-btn" class="dpad-btn left" aria-label="Move left">◀</button>
@@ -47,7 +47,7 @@
     </div>
 
     <div class="instructions">
-        <span id="desktopInstructions">Eat the food and grow the snake.<br>Avoid the walls and your own body.</span>
+        <span id="desktopInstructions">Use Arrow keys or WASD to control the snake.<br>Eat food, avoid walls and your body.</span>
         <span id="mobileInstructions" style="display: none;">Swipe on screen or use the D-Pad buttons below to control the snake.</span>
     </div>
 
@@ -100,7 +100,7 @@ let gameOver = false;
 
 highScoreElement.textContent = highScore;
 
-// Handle Responsive Canvas Scaling
+// Resize canvas dynamically on mobile, keep standard on desktop
 function resizeCanvas() {
     let size = 480;
     if (isMobile) {
@@ -113,10 +113,10 @@ function resizeCanvas() {
 }
 
 window.addEventListener("resize", resizeCanvas);
-window.addEventListener("orientationchange", () => setTimeout(resizeCanvas, 100));
 
 function initGame() {
     clearInterval(gameLoop);
+    gameLoop = null;
 
     snake = [
         { x: 12, y: 12 },
@@ -222,7 +222,7 @@ function endGame() {
     gameLoop = null;
     gameRunning = false;
     gameOver = true;
-    messageElement.textContent = "Game Over! Tap New Game to play again.";
+    messageElement.textContent = "Game Over! Press New Game to play again.";
     draw(true);
 }
 
@@ -285,7 +285,7 @@ function draw(gameEnded = false) {
     }
 }
 
-// Keyboard controls
+// Desktop Keyboard Controls
 document.addEventListener("keydown", event => {
     const keys = {
         ArrowUp: [0, -1],
@@ -308,7 +308,7 @@ document.addEventListener("keydown", event => {
     }
 });
 
-// Touch Swipe Controls for Canvas
+// Mobile Touch Swipe Controls
 let touchStartX = 0;
 let touchStartY = 0;
 
@@ -318,7 +318,9 @@ canvas.addEventListener("touchstart", (e) => {
 }, { passive: true });
 
 canvas.addEventListener("touchmove", (e) => {
-    e.preventDefault(); // Prevent page scrolling during swipe
+    if (gameRunning) {
+        e.preventDefault();
+    }
 }, { passive: false });
 
 canvas.addEventListener("touchend", (e) => {
@@ -330,14 +332,11 @@ canvas.addEventListener("touchend", (e) => {
     let dx = touchEndX - touchStartX;
     let dy = touchEndY - touchStartY;
 
-    // Minimum swipe distance threshold
     if (Math.abs(dx) > 20 || Math.abs(dy) > 20) {
         if (Math.abs(dx) > Math.abs(dy)) {
-            // Horizontal swipe
             if (dx > 0) changeDirection(1, 0);
             else changeDirection(-1, 0);
         } else {
-            // Vertical swipe
             if (dy > 0) changeDirection(0, 1);
             else changeDirection(0, -1);
         }
@@ -347,21 +346,24 @@ canvas.addEventListener("touchend", (e) => {
     touchStartY = 0;
 });
 
-// On-screen D-Pad Controls
-const handleDpadAction = (x, y) => (e) => {
-    e.preventDefault();
-    changeDirection(x, y);
-};
+// Button Click & Touch Bindings
+function bindButton(id, dx, dy) {
+    const btn = document.getElementById(id);
+    if (!btn) return;
 
-document.getElementById("up-btn").addEventListener("touchstart", handleDpadAction(0, -1), { passive: false });
-document.getElementById("down-btn").addEventListener("touchstart", handleDpadAction(0, 1), { passive: false });
-document.getElementById("left-btn").addEventListener("touchstart", handleDpadAction(-1, 0), { passive: false });
-document.getElementById("right-btn").addEventListener("touchstart", handleDpadAction(1, 0), { passive: false });
+    const trigger = (e) => {
+        if (e.cancelable) e.preventDefault();
+        changeDirection(dx, dy);
+    };
 
-document.getElementById("up-btn").addEventListener("click", handleDpadAction(0, -1));
-document.getElementById("down-btn").addEventListener("click", handleDpadAction(0, 1));
-document.getElementById("left-btn").addEventListener("click", handleDpadAction(-1, 0));
-document.getElementById("right-btn").addEventListener("click", handleDpadAction(1, 0));
+    btn.addEventListener("touchstart", trigger, { passive: false });
+    btn.addEventListener("click", trigger);
+}
+
+bindButton("up-btn", 0, -1);
+bindButton("down-btn", 0, 1);
+bindButton("left-btn", -1, 0);
+bindButton("right-btn", 1, 0);
 
 document.getElementById("reset-btn").addEventListener("click", initGame);
 
