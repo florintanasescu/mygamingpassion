@@ -118,6 +118,31 @@ audio {
     display: flex;
 }
 
+.sound-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: min(420px, 90vw);
+}
+
+.sound-controls audio {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    max-width: 100%;
+}
+
+.sound-toggle {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 10px 12px;
+    white-space: nowrap;
+}
+
 /* YouTube Video Container */
 .video-container {
     width: 100%;

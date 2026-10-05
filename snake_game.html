@@ -18,7 +18,14 @@
         <a href="snake_game.html" class="active">Snake</a>
     </nav>
 
-    <audio type="audio/mp3" src="sounds/bg_music.mp3" controls loop unmute></audio>
+    <div class="sound-controls">
+        <audio type="audio/mp3" src="sounds/bg_music.mp3" controls loop></audio>
+        <button type="button" id="sound-toggle" class="sound-toggle" aria-pressed="false">
+            <i class="fa-solid fa-volume-high" aria-hidden="true"></i>
+            <span>Mute sounds</span>
+        </button>
+    </div>
+    <script src="sound-toggle.js"></script>
 
     <h1>Snake</h1>
 

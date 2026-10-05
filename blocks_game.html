@@ -15,13 +15,20 @@
         <a href="sudoku_game.html" class="active">Sudoku</a>
         <a href="snake_game.html" class="active">Snake</a>
     </nav>
-    <audio type="audio/mp3" src="sounds/bg_music.mp3" controls loop unmute></audio>
+    <div class="sound-controls">
+        <audio type="audio/mp3" src="sounds/bg_music.mp3" controls loop></audio>
+        <button type="button" id="sound-toggle" class="sound-toggle" aria-pressed="false">
+            <i class="fa-solid fa-volume-high" aria-hidden="true"></i>
+            <span>Mute sounds</span>
+        </button>
+    </div>
     
     <!-- Audio Elements for Sound Effects -->
     <audio id="sound-shape-click" src="sounds/shape_click.mp3" preload="auto"></audio>
     <audio id="sound-3liner" src="sounds/3liner.mp3" preload="auto"></audio>
     <audio id="sound-level-up" src="sounds/level_up.mp3" preload="auto"></audio>
     <audio id="sound-all-clear" src="sounds/all_clear.mp3" preload="auto"></audio>
+    <script src="sound-toggle.js"></script>
 
     <!-- Score & Level Board in the same div -->
     <div class="score-board">
