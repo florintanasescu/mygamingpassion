@@ -23,6 +23,9 @@
         </button>
     </div>
     <script src="sound-toggle.js"></script>
+
+    <main class="leaderboard-layout">
+        <section class="game-area" aria-label="Tiles game">
     <canvas id="gameCanvas"></canvas>
     
     <div class="controls">
@@ -34,6 +37,26 @@
         <div id="desktopInstructions">Use Left/Right Arrows or Mouse to move. Press Space to Pause/Resume.</div>
         <div id="mobileInstructions" style="display: none;">Touch and drag to move paddle. Tap Pause button to pause/resume.</div>
     </div>
+
+        </section>
+        <aside id="leaderboard-panel" class="leaderboard-panel" data-game="tiles" aria-labelledby="leaderboard-title">
+            <h2 id="leaderboard-title">Top 10 High Scores</h2>
+            <form id="player-name-form" class="player-name-form">
+                <label for="player-name">Your name</label>
+                <div class="player-name-row">
+                    <input id="player-name" name="player-name" type="text" maxlength="20" autocomplete="nickname" required>
+                    <button type="submit">Save</button>
+                </div>
+            </form>
+            <p class="leaderboard-status">Scores are saved in this browser only.</p>
+            <p id="leaderboard-status" class="leaderboard-status" role="status" aria-live="polite"></p>
+            <table class="leaderboard-table">
+                <thead><tr><th scope="col">#</th><th scope="col">Name</th><th scope="col">Score</th></tr></thead>
+                <tbody id="leaderboard-rows"></tbody>
+            </table>
+        </aside>
+    </main>
+    <script src="leaderboard.js"></script>
 
     <script>
         // Detect if device is mobile first
@@ -50,6 +73,7 @@
         let isPaused = false;
         let gameOver = false;
         let gameWon = false;
+        let scoreRecorded = false;
         let animationFrameId;
 
         // Ball setup
@@ -291,6 +315,10 @@
                                 gameWon = true;
                                 isGameStarted = false;
                                 cancelAnimationFrame(animationFrameId);
+                                if (!scoreRecorded) {
+                                    window.gameLeaderboard.record(score);
+                                    scoreRecorded = true;
+                                }
                                 // Draw the overlay once
                                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                                 drawBricks();
@@ -388,6 +416,7 @@
             gameOver = false;
             gameWon = false;
             score = 0;
+            scoreRecorded = false;
             x = canvas.width / 2;
             y = canvas.height - 30;
             dx = 1.5;
@@ -448,6 +477,10 @@
                     gameOver = true;
                     isGameStarted = false;
                     cancelAnimationFrame(animationFrameId);
+                    if (!scoreRecorded) {
+                        window.gameLeaderboard.record(score);
+                        scoreRecorded = true;
+                    }
                     // Draw the overlay once
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     drawBricks();

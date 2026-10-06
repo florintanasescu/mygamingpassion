@@ -30,9 +30,15 @@
     <audio id="sound-all-clear" src="sounds/all_clear.mp3" preload="auto"></audio>
     <script src="sound-toggle.js"></script>
 
+    <main class="leaderboard-layout">
+        <section class="game-area" aria-label="Blocks game">
     <!-- Score & Level Board in the same div -->
     <div class="score-board">
         Score: <span id="score">0</span> | Level: <span id="level">1</span>
+    </div>
+
+    <div class="button-group blocks-reset-controls">
+        <button class="reset-btn" id="reset-btn">Give up and reset</button>
     </div>
     
     <!-- Main 8x8 Grid Canvas -->
@@ -54,10 +60,7 @@
         </div>
     </div>
 
-    <!-- Control Buttons -->
-    <div class="button-group">
-        <button class="reset-btn" id="reset-btn">Give up and reset</button>
-    </div>
+    <p id="game-message" class="instructions" aria-live="polite"></p>
 
     <script>
         const GRID_SIZE = 8;
@@ -66,6 +69,7 @@
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
         const levelElement = document.getElementById('level');
+        const resetBtn = document.getElementById('reset-btn');
 
         // Audio Elements
         const soundShapeClick = document.getElementById('sound-shape-click');
@@ -82,6 +86,8 @@
 
         let score = 0;
         let level = 1;
+        let gameOver = false;
+        let scoreRecorded = false;
         let grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(0));
 
         const SHAPES = [
@@ -112,12 +118,27 @@
             grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(0));
             score = 0;
             level = 1;
+            gameOver = false;
+            scoreRecorded = false;
             scoreElement.innerText = score;
             levelElement.innerText = level;
+            document.getElementById('game-message').textContent = '';
+            resetBtn.textContent = 'Give up and reset';
             usedShapeIndices.clear();
             shapeRotations = [0, 0, 0];
             spawnShapes();
             drawGrid();
+        }
+
+        function finishGame() {
+            if (gameOver) return;
+            gameOver = true;
+            document.getElementById('game-message').textContent = 'No more moves. Final score: ' + score;
+            resetBtn.textContent = 'New Game';
+            if (!scoreRecorded) {
+                window.gameLeaderboard.record(score);
+                scoreRecorded = true;
+            }
         }
 
         // Rotate a matrix 90 degrees clockwise
@@ -253,6 +274,23 @@
             return true;
         }
 
+        function hasAvailableMove() {
+            return currentShapes.some((shapeData) => {
+                if (!shapeData) return false;
+
+                for (let rotation = 0; rotation < 4; rotation++) {
+                    const shape = getRotatedShape(shapeData.shapeIndex, rotation);
+                    for (let row = 0; row < GRID_SIZE; row++) {
+                        for (let col = 0; col < GRID_SIZE; col++) {
+                            if (canPlaceShape(shape, row, col)) return true;
+                        }
+                    }
+                }
+
+                return false;
+            });
+        }
+
         function addScore(points) {
             const oldScore = score;
             score += points;
@@ -345,7 +383,7 @@
         }
 
         function handleStart(index, e) {
-            if (!currentShapes[index]) return;
+            if (gameOver || !currentShapes[index]) return;
             e.preventDefault();
             
             isTouchDevice = e.type.startsWith('touch');
@@ -421,6 +459,7 @@
                 currentShapes[draggingIndex] = null;
 
                 spawnShapes();
+                if (!hasAvailableMove()) finishGame();
             }
 
             draggingIndex = null;
@@ -445,8 +484,13 @@
         }
 
         // Add reset button listener
-        const resetBtn = document.getElementById('reset-btn');
         resetBtn.addEventListener('click', () => {
+            if (!gameOver && !window.confirm('Give up and reset this game?')) return;
+
+            if (!gameOver && !scoreRecorded) {
+                window.gameLeaderboard.record(score);
+                scoreRecorded = true;
+            }
             initGame();
         });
 
@@ -460,6 +504,25 @@
         // Start Game
         initGame();
     </script>
+        </section>
+        <aside id="leaderboard-panel" class="leaderboard-panel" data-game="blocks" aria-labelledby="leaderboard-title">
+            <h2 id="leaderboard-title">Top 10 High Scores</h2>
+            <form id="player-name-form" class="player-name-form">
+                <label for="player-name">Your name</label>
+                <div class="player-name-row">
+                    <input id="player-name" name="player-name" type="text" maxlength="20" autocomplete="nickname" required>
+                    <button type="submit">Save</button>
+                </div>
+            </form>
+            <p class="leaderboard-status">Scores are saved in this browser only.</p>
+            <p id="leaderboard-status" class="leaderboard-status" role="status" aria-live="polite"></p>
+            <table class="leaderboard-table">
+                <thead><tr><th scope="col">#</th><th scope="col">Name</th><th scope="col">Score</th></tr></thead>
+                <tbody id="leaderboard-rows"></tbody>
+            </table>
+        </aside>
+    </main>
+    <script src="leaderboard.js"></script>
 
     <div class="social-links">
         <!-- Facebook Link -->

@@ -143,6 +143,106 @@ audio {
     white-space: nowrap;
 }
 
+.leaderboard-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 290px;
+    align-items: start;
+    gap: 24px;
+    width: min(1200px, 100%);
+    margin: 16px auto;
+}
+
+.game-area {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+}
+
+.leaderboard-panel {
+    width: 100%;
+    padding: 16px;
+    color: #fff;
+    background: rgba(1, 16, 24, 0.95);
+    border: 1px solid #0095DD;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 149, 221, 0.3);
+}
+
+.leaderboard-panel h2 {
+    margin: 0 0 14px;
+    color: #fff;
+    font-size: 20px;
+    text-align: center;
+}
+
+.player-name-form label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+}
+
+.player-name-row {
+    display: flex;
+    gap: 6px;
+}
+
+.player-name-row input {
+    flex: 1;
+    min-width: 0;
+    padding: 9px;
+    color: #111;
+    background: #fff;
+    border: 1px solid #0095DD;
+    border-radius: 5px;
+    font-size: 14px;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+.player-name-row button {
+    flex: 0 0 auto;
+    min-width: auto;
+    padding: 8px 10px;
+}
+
+.leaderboard-status {
+    min-height: 1.3em;
+    margin: 8px 0;
+    color: #b9e9ff;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.leaderboard-status.error {
+    color: #ff9999;
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+    padding: 7px 5px;
+    border-bottom: 1px solid rgba(0, 149, 221, 0.35);
+    text-align: left;
+    overflow-wrap: anywhere;
+}
+
+.leaderboard-table th:last-child,
+.leaderboard-table td:last-child {
+    text-align: right;
+}
+
+.leaderboard-table .empty-scores {
+    padding: 14px 5px;
+    color: #c5c5d0;
+    text-align: center;
+}
+
 /* YouTube Video Container */
 .video-container {
     width: 100%;
@@ -160,6 +260,23 @@ audio {
     height: 315px;
     border: none;
     display: block;
+}
+
+@media (max-width: 1150px) {
+    .leaderboard-layout {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .game-area {
+        width: 100%;
+    }
+
+    .leaderboard-panel {
+        width: min(100%, 480px);
+    }
 }
 
 /* Social Links */
@@ -275,6 +392,17 @@ canvas {
     margin-top: 15px;
     width: 100%;
     justify-content: center;
+}
+
+.blocks-reset-controls {
+    max-width: 320px;
+    margin: 0 auto 4px;
+    justify-content: flex-end;
+}
+
+.blocks-reset-controls .reset-btn {
+    flex: 0 0 auto;
+    min-width: 0;
 }
 
 .reset-btn {

@@ -27,6 +27,8 @@
     </div>
     <script src="sound-toggle.js"></script>
 
+    <main class="leaderboard-layout">
+        <section class="game-area" aria-label="Snake game">
     <h1>Snake</h1>
 
     <div class="score-board">
@@ -57,6 +59,26 @@
         Eat the food and grow the snake.<br>
         Avoid the walls and your own body.
     </div>
+
+        </section>
+        <aside id="leaderboard-panel" class="leaderboard-panel" data-game="snake" aria-labelledby="leaderboard-title">
+            <h2 id="leaderboard-title">Top 10 High Scores</h2>
+            <form id="player-name-form" class="player-name-form">
+                <label for="player-name">Your name</label>
+                <div class="player-name-row">
+                    <input id="player-name" name="player-name" type="text" maxlength="20" autocomplete="nickname" required>
+                    <button type="submit">Save</button>
+                </div>
+            </form>
+            <p class="leaderboard-status">Scores are saved in this browser only.</p>
+            <p id="leaderboard-status" class="leaderboard-status" role="status" aria-live="polite"></p>
+            <table class="leaderboard-table">
+                <thead><tr><th scope="col">#</th><th scope="col">Name</th><th scope="col">Score</th></tr></thead>
+                <tbody id="leaderboard-rows"></tbody>
+            </table>
+        </aside>
+    </main>
+    <script src="leaderboard.js"></script>
 
     <div class="social-links">
         <a href="https://www.facebook.com/florin.tanasescu.ro/" target="_blank">
@@ -230,6 +252,7 @@ function endGame() {
     gameLoop = null;
     gameRunning = false;
     gameOver = true;
+    window.gameLeaderboard.record(score);
     messageElement.textContent = "Game Over! Press an arrow key or New Game to restart.";
     draw(true);
 }
