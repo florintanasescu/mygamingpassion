@@ -367,6 +367,48 @@ canvas {
     gap: 6px;
 }
 
+.next-shapes {
+    width: min(240px, 90vw);
+    margin: 8px auto 0;
+    padding: 8px 12px;
+    background-color: rgba(1, 16, 24, 0.85);
+    border: 1px solid #3a3a5a;
+    border-radius: 6px;
+}
+
+.next-shapes h2 {
+    margin: 0 0 6px;
+    color: #c5c5d0;
+    font-size: 12px;
+    font-weight: normal;
+    text-align: center;
+}
+
+.next-shapes-tray {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+}
+
+.next-shape-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    color: #c5c5d0;
+    font-size: 10px;
+}
+
+.next-shape-preview {
+    width: 52px;
+    height: 52px;
+    margin: 0;
+    background-color: #12121c;
+    border: 1px solid #3a3a5a;
+    border-radius: 4px;
+    box-shadow: none;
+}
+
 .rotate-btn {
     background-color: #3a3a5a;
     color: #ffffff;

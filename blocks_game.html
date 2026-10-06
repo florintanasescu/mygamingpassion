@@ -60,6 +60,24 @@
         </div>
     </div>
 
+    <section class="next-shapes" aria-labelledby="next-shapes-title">
+        <h2 id="next-shapes-title">Next shapes</h2>
+        <div class="next-shapes-tray">
+            <div class="next-shape-slot">
+                <canvas id="next-shape0" class="next-shape-preview" width="52" height="52" aria-label="Next shape for tray slot 1"></canvas>
+                <span>Slot 1</span>
+            </div>
+            <div class="next-shape-slot">
+                <canvas id="next-shape1" class="next-shape-preview" width="52" height="52" aria-label="Next shape for tray slot 2"></canvas>
+                <span>Slot 2</span>
+            </div>
+            <div class="next-shape-slot">
+                <canvas id="next-shape2" class="next-shape-preview" width="52" height="52" aria-label="Next shape for tray slot 3"></canvas>
+                <span>Slot 3</span>
+            </div>
+        </div>
+    </section>
+
     <p id="game-message" class="instructions" aria-live="polite"></p>
 
     <script>
@@ -107,6 +125,7 @@
         ];
 
         let currentShapes = [null, null, null];
+        let nextShapes = [null, null, null];
         let shapeRotations = [0, 0, 0]; // Track rotation state for each shape
         let usedShapeIndices = new Set(); // Track which shape types have been used
         let draggingIndex = null;
@@ -125,6 +144,8 @@
             document.getElementById('game-message').textContent = '';
             resetBtn.textContent = 'Give up and reset';
             usedShapeIndices.clear();
+            currentShapes = [null, null, null];
+            nextShapes = [null, null, null];
             shapeRotations = [0, 0, 0];
             spawnShapes();
             drawGrid();
@@ -193,34 +214,62 @@
             context.strokeRect(x + 2, y + 2, size - 4, size - 4);
         }
 
+        function createRandomShape() {
+            let availableShapeIndices = SHAPES
+                .map((shape, index) => index)
+                .filter((index) => !usedShapeIndices.has(index));
+
+            if (availableShapeIndices.length === 0) {
+                usedShapeIndices.clear();
+                availableShapeIndices = SHAPES.map((shape, index) => index);
+            }
+
+            const shapeIndex = availableShapeIndices[Math.floor(Math.random() * availableShapeIndices.length)];
+            usedShapeIndices.add(shapeIndex);
+
+            return {
+                shapeIndex: shapeIndex,
+                baseShape: JSON.parse(JSON.stringify(SHAPES[shapeIndex]))
+            };
+        }
+
         function spawnShapes() {
             for (let i = 0; i < 3; i++) {
-                if (currentShapes[i] !== null) continue; // Skip already placed shapes
-                
-                // Find a shape that hasn't been used yet
-                let shapeIndex;
-                let attempts = 0;
-                do {
-                    shapeIndex = Math.floor(Math.random() * SHAPES.length);
-                    attempts++;
-                } while (usedShapeIndices.has(shapeIndex) && attempts < 100);
-                
-                // If all shapes have been used (or after 100 attempts), reset the used list
-                if (attempts >= 100) {
-                    usedShapeIndices.clear();
-                    shapeIndex = Math.floor(Math.random() * SHAPES.length);
+                if (currentShapes[i] === null) {
+                    currentShapes[i] = nextShapes[i] || createRandomShape();
+                    shapeRotations[i] = 0;
                 }
-                
-                usedShapeIndices.add(shapeIndex);
-                
-                // Store both the shape index and the original shape (not rotated yet)
-                currentShapes[i] = {
-                    shapeIndex: shapeIndex,
-                    baseShape: JSON.parse(JSON.stringify(SHAPES[shapeIndex]))
-                };
-                
-                shapeRotations[i] = 0; // Reset rotation
+
+                if (nextShapes[i] === null) {
+                    nextShapes[i] = createRandomShape();
+                }
+
                 drawTrayShape(i);
+                drawNextShape(i);
+            }
+        }
+
+        function drawNextShape(index) {
+            const previewCanvas = document.getElementById(`next-shape${index}`);
+            const previewContext = previewCanvas.getContext('2d');
+            previewContext.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+            const shapeData = nextShapes[index];
+            if (!shapeData) return;
+
+            const shape = SHAPES[shapeData.shapeIndex];
+            const scale = 10;
+            const rows = shape.matrix.length;
+            const cols = shape.matrix[0].length;
+            const offsetX = (previewCanvas.width - cols * scale) / 2;
+            const offsetY = (previewCanvas.height - rows * scale) / 2;
+
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    if (shape.matrix[row][col]) {
+                        drawCell(previewContext, offsetX + col * scale, offsetY + row * scale, scale, shape.color);
+                    }
+                }
             }
         }
 
@@ -456,7 +505,8 @@
 
             if (canPlaceShape(rotatedShape, gridRow, gridCol)) {
                 placeShape(rotatedShape, gridRow, gridCol);
-                currentShapes[draggingIndex] = null;
+                currentShapes[draggingIndex] = nextShapes[draggingIndex];
+                nextShapes[draggingIndex] = null;
 
                 spawnShapes();
                 if (!hasAvailableMove()) finishGame();
