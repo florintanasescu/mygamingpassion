@@ -420,13 +420,7 @@
                 placeShape(rotatedShape, gridRow, gridCol);
                 currentShapes[draggingIndex] = null;
 
-                const trayCanvas = document.getElementById(`shape${draggingIndex}`);
-                const tCtx = trayCanvas.getContext('2d');
-                tCtx.clearRect(0, 0, trayCanvas.width, trayCanvas.height);
-
-                if (currentShapes.every(s => s === null)) {
-                    spawnShapes();
-                }
+                spawnShapes();
             }
 
             draggingIndex = null;
